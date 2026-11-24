@@ -1,0 +1,6 @@
+# Secrets (SESSION_KEY for agentgateway)
+.env
+# agentgateway database (request logs), created at runtime
+gateway-data/
+# Python cache
+__pycache__/

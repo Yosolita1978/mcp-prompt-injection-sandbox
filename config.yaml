@@ -1,0 +1,32 @@
+# agentgateway v1.7.0 standalone config, run with Docker.
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+
+# Database setting required when you supply your own config file in Docker.
+# Docs: https://agentgateway.dev/docs/standalone/latest/documentation/setup/install/docker/
+config:
+  database:
+    url: sqlite:///gateway-data/data.db
+  # No session key here on purpose: it is a secret. agentgateway reads it from the
+  # SESSION_KEY environment variable (in .env, which git ignores) and then does not
+  # write one into this file.
+  # Docs: https://agentgateway.dev/docs/standalone/latest/integrations/mcp/servers/http/#session-key
+
+# The gateway listens on port 4000.
+# Docs: https://agentgateway.dev/docs/standalone/latest/documentation/quickstart/mcp/
+gateways:
+  default:
+    port: 4000
+
+# Forward MCP traffic to our server running on the Mac (not in Docker).
+# host.docker.internal = "the Mac running this container" (Docker Desktop feature).
+# Docs: https://docs.docker.com/desktop/features/networking/
+mcp:
+  targets:
+  - name: anzuelo-sandbox
+    mcp:
+      host: http://host.docker.internal:8000/mcp
+
+# Serve the web UI on port 4000, because the admin port (15000) is not reachable from outside the container.
+# Docs: https://agentgateway.dev/docs/standalone/latest/documentation/setup/install/docker/
+ui:
+  gateways: default
