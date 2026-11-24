@@ -9,3 +9,5 @@ runs/*/gateway-data/
 runs/*/goose-home/
 # Anthropic API key for Goose (not for the gateway)
 .env.goose
+# Article draft, not public until published
+doc/article-draft.md
