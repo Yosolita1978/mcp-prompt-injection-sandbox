@@ -3,6 +3,8 @@
 What happens when an AI agent reads social media posts that contain a hidden
 instruction (prompt injection), and what an MCP gateway can and can't do about it.
 
+Write-up: [Prompt Injection vs. the Gateway: Round One](https://dev.to/yosolita1978/prompt-injection-vs-the-gateway-round-one-5b7o)
+
 The setup is a small MCP server over six fake leads, [agentgateway](https://agentgateway.dev)
 in front of it, and [Goose](https://github.com/aaif-goose/goose) as the agent.
 Two of the leads hide a note telling AI assistants to put
