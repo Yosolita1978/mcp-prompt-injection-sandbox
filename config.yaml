@@ -21,6 +21,14 @@ gateways:
 # host.docker.internal = "the Mac running this container" (Docker Desktop feature).
 # Docs: https://docs.docker.com/desktop/features/networking/
 mcp:
+  # Allowlist (least privilege): only these tools are allowed. Any tool not
+  # listed here, like draft_reply, is denied and hidden from the tools list.
+  # Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/
+  policies:
+    mcpAuthorization:
+      rules:
+      - 'mcp.tool.name == "search_leads"'
+      - 'mcp.tool.name == "get_lead"'
   targets:
   - name: anzuelo-sandbox
     mcp:

@@ -35,7 +35,7 @@ never connects to Anzuelo's production Supabase and never changes anything in
 ## Status: Module 2 (security, guardrails, gateways)
 - [ ] 1. agentgateway quickstart with server-everything (skipped so far, went straight to step 2)
 - [x] 2. Own FastMCP server with fake leads behind agentgateway (6 playground tests passed, 2026-11-24)
-- [ ] 3. First rule: allow read tools, block draft_reply
+- [x] 3. First rule: allow read tools, block draft_reply (draft_reply hidden and blocked, 2026-11-24)
 - [ ] 4. Spike: route-level rule that reads tool arguments (English and Spanish)
 - [ ] 5. Goose on a local model, three attack runs, logs saved
 - [ ] 6. Swap in anonymized real Anzuelo leads
