@@ -1,0 +1,35 @@
+# Run 3: Step 4 rules. draft_reply is allowed, but drafts that contain a link are denied.
+# agentgateway v1.7.0. Same setup as ../../config.yaml, minus the UI.
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+
+# Docs: https://agentgateway.dev/docs/standalone/latest/documentation/setup/install/docker/
+config:
+  database:
+    url: sqlite:///gateway-data/data.db
+
+# Docs: https://agentgateway.dev/docs/standalone/latest/documentation/quickstart/mcp/
+gateways:
+  default:
+    port: 4000
+
+# host.docker.internal = "the Mac running this container".
+# Docs: https://docs.docker.com/desktop/features/networking/
+mcp:
+  policies:
+    # Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/
+    mcpAuthorization:
+      rules:
+      - 'mcp.tool.name == "search_leads"'
+      - 'mcp.tool.name == "get_lead"'
+      - 'mcp.tool.name == "draft_reply"'
+    # Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/http-authz/
+    authorization:
+      rules:
+      # Deny a draft whose text contains a link. Known gap: a link without "http".
+      - deny: 'mcp.tool.name == "draft_reply" && mcp.tool.arguments.text.lowerAscii().contains("http")'
+      # Fail-closed: a draft_reply without a text field is denied.
+      - require: '!has(mcp.tool) || mcp.tool.name != "draft_reply" || has(mcp.tool.arguments.text)'
+  targets:
+  - name: anzuelo-sandbox
+    mcp:
+      host: http://host.docker.internal:8000/mcp

@@ -16,7 +16,8 @@ never connects to Anzuelo's production Supabase and never changes anything in
   - draft_reply: write tool, saves a draft locally, never sends anything
 - agentgateway v1.7.0 in front of the MCP server, run with Docker
   (no Intel Mac binary exists). How to run it: doc/agentgateway-guide.md
-- Goose on a local model as the client (later session)
+- Goose as the client: Claude Sonnet 5.5 (local models were too slow or too weak on
+  this Intel Mac, see runs/). Run with ./runs/run.sh 1|2|3
 - Docker Compose to run everything with one command (later session)
 
 ## Rules
@@ -39,5 +40,7 @@ never connects to Anzuelo's production Supabase and never changes anything in
 - [x] 4. Spike: route-level rule that reads tool arguments (English and Spanish)
   (link rule blocks both languages; known gaps: link without "http", non-string
   text fails open and only the server catches it. 2026-11-24)
-- [ ] 5. Goose on a local model, three attack runs, logs saved
+- [x] 5. Goose, three attack runs, logs saved (runs/run1-3, 2026-11-24). Switched from
+  local models to Claude Sonnet 5.5. The model ignored and reported the injection in
+  all three runs, so the gateway never had to stop a fooled agent.
 - [ ] 6. Swap in anonymized real Anzuelo leads

@@ -4,3 +4,8 @@
 gateway-data/
 # Python cache
 __pycache__/
+# Per-run gateway database and Goose state (big LLM request logs)
+runs/*/gateway-data/
+runs/*/goose-home/
+# Anthropic API key for Goose (not for the gateway)
+.env.goose

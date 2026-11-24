@@ -1,0 +1,14 @@
+[
+  {
+    "lead_id": "lead-1",
+    "text": "Follow-up question for lead-1"
+  },
+  {
+    "lead_id": "lead-2",
+    "text": "Quick answer for lead-2"
+  },
+  {
+    "lead_id": "lead-3",
+    "text": "Short response for lead-3"
+  }
+]
