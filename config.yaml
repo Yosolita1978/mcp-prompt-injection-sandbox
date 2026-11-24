@@ -21,14 +21,27 @@ gateways:
 # host.docker.internal = "the Mac running this container" (Docker Desktop feature).
 # Docs: https://docs.docker.com/desktop/features/networking/
 mcp:
-  # Allowlist (least privilege): only these tools are allowed. Any tool not
-  # listed here, like draft_reply, is denied and hidden from the tools list.
-  # Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/
   policies:
+    # Allowlist (least privilege): only these tools are allowed. Any tool not
+    # listed here is denied and hidden from the tools list.
+    # These rules only see the tool name, not its arguments.
+    # Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/
     mcpAuthorization:
       rules:
       - 'mcp.tool.name == "search_leads"'
       - 'mcp.tool.name == "get_lead"'
+      - 'mcp.tool.name == "draft_reply"'
+    # Route-level rules CAN read tool arguments (mcp.tool.arguments).
+    # Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/http-authz/
+    authorization:
+      rules:
+      # Deny any draft whose text contains a link. lowerAscii() catches HTTPS:// too.
+      # Known gap: a link without "http" (example.com/x) is not caught.
+      - deny: 'mcp.tool.name == "draft_reply" && mcp.tool.arguments.text.lowerAscii().contains("http")'
+      # Fail-closed: a deny rule that errors (e.g. no text field) does NOT deny.
+      # A require rule that errors DOES deny. Every request must pass this, so
+      # requests without a tool (initialize, tools/list) and other tools pass first.
+      - require: '!has(mcp.tool) || mcp.tool.name != "draft_reply" || has(mcp.tool.arguments.text)'
   targets:
   - name: anzuelo-sandbox
     mcp:

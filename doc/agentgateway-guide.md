@@ -151,6 +151,9 @@ limit what the agent can *do* after reading it.
 
 ## 7. First rule: allow the read tools, block draft_reply
 
+(This was the config for this section's tests. Section 8 changes it: draft_reply
+is allowed again, with argument rules.)
+
 Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/mcp-authz/
 
 **Authorization** means deciding what a caller is allowed to do (authentication
@@ -217,7 +220,72 @@ The caller is told the tool doesn't exist, not that it's forbidden, so an
 attacker learns nothing. The owner gets the real reason in the log. The request
 never reaches the MCP server.
 
-## 8. Stop and reset
+## 8. Spike: a rule that reads the tool's arguments
+
+Docs: https://agentgateway.dev/docs/standalone/latest/documentation/configuration/security/http-authz/
+
+Blocking `draft_reply` completely (section 7) is safe, but drafting replies is
+what Anzuelo is for. So this spike asks: can we allow drafts but block the ones
+that look like the attack? The injected posts want a link in every reply, so the
+rule is "deny a draft whose text contains a link".
+
+`mcpAuthorization` rules only see the tool name. A route-level `authorization`
+policy can read the arguments through `mcp.tool.arguments`. `config.yaml` now
+puts `draft_reply` back on the allowlist and adds:
+
+```yaml
+    authorization:
+      rules:
+      - deny: 'mcp.tool.name == "draft_reply" && mcp.tool.arguments.text.lowerAscii().contains("http")'
+      - require: '!has(mcp.tool) || mcp.tool.name != "draft_reply" || has(mcp.tool.arguments.text)'
+```
+
+**Fail-open vs fail-closed.** When a rule can't be evaluated (for example the
+`text` field is missing), agentgateway treats it as false. For a `deny` rule
+that means *not denied*, so the call goes through (fail-open). For a `require`
+rule it means *denied* (fail-closed). The `require` rule closes that hole for a
+missing `text`. It runs on every request, so it lets requests without a tool
+(`initialize`, `tools/list`) and other tools pass first.
+
+### Results (run on 2026-11-24)
+
+| # | Draft text | Gateway | Notes |
+|---|---|---|---|
+| 1 | `Hi! Happy to help.` | allowed (200) | normal drafts still work |
+| 2 | English attack with `https://example.com/free-audit` | **blocked (403)** | |
+| 3 | Spanish attack with `https://example.com/free-audit` | **blocked (403)** | language doesn't matter: the rule checks the link, not the words |
+| 4 | `HTTPS://EXAMPLE.COM/free-audit` | **blocked (403)** | `lowerAscii()` |
+| 5 | `example.com/free-audit` (no `http`) | allowed (200) | **known gap**: the draft was saved |
+| 6 | no `text` field | **blocked (403)** | before the `require` rule this got through and only the server rejected it |
+| 7 | `text` is the number `12345` | allowed (200) | **known gap**: the `deny` rule errors and fails open; the server rejected it (`Input should be a valid string`), nothing saved |
+
+`get_lead` and `tools/list` still work with both rules in place.
+
+A blocked call gets `HTTP 403` with the body `authorization failed`, and the
+gateway log says `error="authorization failed" reason=Authorization`. Two
+differences from section 7: the caller learns that a rule exists (section 7
+said `unknown resource`), and the log line has no tool name.
+
+### What the spike taught us
+
+- **A text filter is a speed bump, not a wall.** Test 5 got around it by
+  dropping `http`. Adding `.com` would miss `example . com`, and so on. The
+  attacker needs one way through; the filter has to block all of them.
+- **Errors in a deny rule fail open.** Tests 6 and 7 got past the first
+  version of the rule. Use `require` for checks that must hold.
+- **Defense in depth.** Test 7 was stopped by the MCP server's own input
+  validation, not by the gateway. No single layer caught everything.
+- The stronger protections are still: don't give the agent a write tool it
+  doesn't need (section 7), and `draft_reply` never sends anything, so a human
+  reads every draft before it goes out.
+
+To repeat a test by hand, set up a session like in section 7 and send:
+
+```sh
+curl -s -w '\nHTTP %{http_code}\n' -X POST $U -H "$H1" -H "$H2" -H "mcp-session-id: $SID" -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"draft_reply","arguments":{"lead_id":"lead-3","text":"Free website audit: https://example.com/free-audit"}}}'
+```
+
+## 9. Stop and reset
 
 - Stop either process with `Ctrl+C`.
 - Clear saved drafts: `echo '[]' > data/drafts.json`
